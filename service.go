@@ -1,4 +1,4 @@
-package googleanalyticsreporting
+package googleanalytics
 
 import (
 	"context"
@@ -7,18 +7,20 @@ import (
 	errortools "github.com/leapforce-libraries/go_errortools"
 	google "github.com/leapforce-libraries/go_google"
 	"golang.org/x/oauth2"
+	"google.golang.org/api/analytics/v3"
 	"google.golang.org/api/analyticsreporting/v4"
 	"google.golang.org/api/option"
 )
 
 const (
-	APIName string = "GoogleAnalyticsReporting"
+	APIName string = "GoogleAnalytics"
 )
 
-// GoogleAnalyticsReporting stores GoogleAnalyticsReporting configuration
+// Service
 //
-type ReportingService struct {
+type Service struct {
 	googleClient     *google.GoogleClient
+	AnalyticsService *analytics.Service
 	ReportingService *analyticsreporting.Service
 }
 
@@ -42,25 +44,29 @@ func (tokenSource TokenSource) Token() (*oauth2.Token, error) {
 
 // methods
 //
-func NewService(clientID string, clientSecret string, scope string, bigQuery *google.BigQuery) (*ReportingService, *errortools.Error) {
+func NewService(clientID string, clientSecret string, bigQuery *google.BigQuery) (*Service, *errortools.Error) {
 	config := google.GoogleClientConfig{
 		APIName:      APIName,
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
-		Scope:        scope,
 	}
 
 	googleClient := google.NewGoogleClient(config, bigQuery)
 
 	tokenSource := TokenSource{googleClient}
 
+	analyticsService, err := analytics.NewService(context.Background(), option.WithTokenSource(tokenSource))
+	if err != nil {
+		return nil, errortools.ErrorMessage(err)
+	}
+
 	reportingService, err := analyticsreporting.NewService(context.Background(), option.WithTokenSource(tokenSource))
 	if err != nil {
 		return nil, errortools.ErrorMessage(err)
 	}
-	return &ReportingService{googleClient, reportingService}, nil
+	return &Service{googleClient, analyticsService, reportingService}, nil
 }
 
-func (rs *ReportingService) InitToken() *errortools.Error {
+func (rs *Service) InitToken() *errortools.Error {
 	return rs.googleClient.InitToken()
 }
