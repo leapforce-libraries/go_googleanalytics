@@ -60,3 +60,7 @@ func NewReportingService(clientID string, clientSecret string, scope string, big
 	}
 	return &ReportingService{googleClient, reportingService}, nil
 }
+
+func (rs *ReportingService) InitToken() *errortools.Error {
+	return rs.googleClient.InitToken()
+}
