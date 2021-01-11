@@ -44,11 +44,12 @@ func (tokenSource TokenSource) Token() (*oauth2.Token, error) {
 
 // methods
 //
-func NewService(clientID string, clientSecret string, bigQuery *google.BigQuery) (*Service, *errortools.Error) {
+func NewService(clientID string, clientSecret string, scope string, bigQuery *google.BigQuery) (*Service, *errortools.Error) {
 	config := google.ServiceConfig{
 		APIName:      APIName,
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
+		Scope:        scope,
 	}
 
 	googleService := google.NewService(config, bigQuery)
