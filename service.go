@@ -19,17 +19,17 @@ const (
 // Service
 //
 type Service struct {
-	googleClient     *google.GoogleClient
+	googleService    *google.Service
 	AnalyticsService *analytics.Service
 	ReportingService *analyticsreporting.Service
 }
 
 type TokenSource struct {
-	googleClient *google.GoogleClient
+	googleService *google.Service
 }
 
 func (tokenSource TokenSource) Token() (*oauth2.Token, error) {
-	t, e := tokenSource.googleClient.ValidateToken()
+	t, e := tokenSource.googleService.ValidateToken()
 	if e != nil {
 		return nil, errors.New(e.Message())
 	}
@@ -45,15 +45,15 @@ func (tokenSource TokenSource) Token() (*oauth2.Token, error) {
 // methods
 //
 func NewService(clientID string, clientSecret string, bigQuery *google.BigQuery) (*Service, *errortools.Error) {
-	config := google.GoogleClientConfig{
+	config := google.ServiceConfig{
 		APIName:      APIName,
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
 	}
 
-	googleClient := google.NewGoogleClient(config, bigQuery)
+	googleService := google.NewService(config, bigQuery)
 
-	tokenSource := TokenSource{googleClient}
+	tokenSource := TokenSource{googleService}
 
 	analyticsService, err := analytics.NewService(context.Background(), option.WithTokenSource(tokenSource))
 	if err != nil {
@@ -64,9 +64,9 @@ func NewService(clientID string, clientSecret string, bigQuery *google.BigQuery)
 	if err != nil {
 		return nil, errortools.ErrorMessage(err)
 	}
-	return &Service{googleClient, analyticsService, reportingService}, nil
+	return &Service{googleService, analyticsService, reportingService}, nil
 }
 
-func (rs *Service) InitToken() *errortools.Error {
-	return rs.googleClient.InitToken()
+func (service *Service) InitToken() *errortools.Error {
+	return service.googleService.InitToken()
 }
