@@ -2,6 +2,7 @@ package googleanalytics
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 
 	errortools "github.com/leapforce-libraries/go_errortools"
@@ -68,6 +69,35 @@ func NewService(clientID string, clientSecret string, scope string, bigQuery *go
 	return &Service{googleService, analyticsService, reportingService}, nil
 }
 
+func NewServiceJSON(credentials *google.CredentialsJSON, bigQuery *google.BigQuery) (*Service, *errortools.Error) {
+	if credentials == nil {
+		return nil, errortools.ErrorMessage("Credentials can be not be a nil pointer.")
+	}
+
+	credentialsJSON, err := json.Marshal(&credentials)
+	if err != nil {
+		return nil, errortools.ErrorMessage(err)
+	}
+
+	analyticsService, err := analytics.NewService(context.Background(), option.WithCredentialsJSON(credentialsJSON))
+	if err != nil {
+		return nil, errortools.ErrorMessage(err)
+	}
+
+	reportingService, err := analyticsreporting.NewService(context.Background(), option.WithCredentialsJSON(credentialsJSON))
+	if err != nil {
+		return nil, errortools.ErrorMessage(err)
+	}
+	return &Service{
+		AnalyticsService: analyticsService,
+		ReportingService: reportingService,
+	}, nil
+}
+
 func (service *Service) InitToken() *errortools.Error {
+	if service.googleService == nil {
+		return errortools.ErrorMessage("GoogleService not initialized.")
+	}
+
 	return service.googleService.InitToken()
 }
