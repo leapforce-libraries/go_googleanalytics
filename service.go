@@ -7,6 +7,8 @@ import (
 
 	errortools "github.com/leapforce-libraries/go_errortools"
 	google "github.com/leapforce-libraries/go_google"
+	bigquery "github.com/leapforce-libraries/go_google/bigquery"
+	credentials "github.com/leapforce-libraries/go_google/credentials"
 	"golang.org/x/oauth2"
 	"google.golang.org/api/analytics/v3"
 	"google.golang.org/api/analyticsreporting/v4"
@@ -45,7 +47,7 @@ func (tokenSource TokenSource) Token() (*oauth2.Token, error) {
 
 // methods
 //
-func NewService(clientID string, clientSecret string, scope string, bigQuery *google.BigQuery) (*Service, *errortools.Error) {
+func NewService(clientID string, clientSecret string, scope string, bigQueryService *bigquery.Service) (*Service, *errortools.Error) {
 	config := google.ServiceConfig{
 		APIName:      APIName,
 		ClientID:     clientID,
@@ -53,7 +55,7 @@ func NewService(clientID string, clientSecret string, scope string, bigQuery *go
 		Scope:        scope,
 	}
 
-	googleService := google.NewService(config, bigQuery)
+	googleService := google.NewService(config, bigQueryService)
 
 	tokenSource := TokenSource{googleService}
 
@@ -69,7 +71,7 @@ func NewService(clientID string, clientSecret string, scope string, bigQuery *go
 	return &Service{googleService, analyticsService, reportingService}, nil
 }
 
-func NewServiceJSON(credentials *google.CredentialsJSON, bigQuery *google.BigQuery) (*Service, *errortools.Error) {
+func NewServiceJSON(credentials *credentials.CredentialsJSON) (*Service, *errortools.Error) {
 	if credentials == nil {
 		return nil, errortools.ErrorMessage("Credentials can be not be a nil pointer.")
 	}
