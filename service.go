@@ -16,12 +16,13 @@ import (
 )
 
 const (
-	APIName string = "GoogleAnalytics"
+	apiName string = "GoogleAnalytics"
 )
 
 // Service
 //
 type Service struct {
+	clientID         string
 	googleService    *google.Service
 	AnalyticsService *analytics.Service
 	ReportingService *analyticsreporting.Service
@@ -45,17 +46,34 @@ func (tokenSource TokenSource) Token() (*oauth2.Token, error) {
 	}, nil
 }
 
-// methods
-//
-func NewService(clientID string, clientSecret string, scope string, bigQueryService *bigquery.Service) (*Service, *errortools.Error) {
-	config := google.ServiceConfig{
-		APIName:      APIName,
-		ClientID:     clientID,
-		ClientSecret: clientSecret,
-		Scope:        scope,
+type ServiceConfig struct {
+	ClientID     string
+	ClientSecret string
+}
+
+func NewService(serviceConfig *ServiceConfig, bigQueryService *bigquery.Service) (*Service, *errortools.Error) {
+	if serviceConfig == nil {
+		return nil, errortools.ErrorMessage("ServiceConfig must not be a nil pointer")
 	}
 
-	googleService := google.NewService(config, bigQueryService)
+	if serviceConfig.ClientID == "" {
+		return nil, errortools.ErrorMessage("ClientID not provided")
+	}
+
+	if serviceConfig.ClientSecret == "" {
+		return nil, errortools.ErrorMessage("ClientSecret not provided")
+	}
+
+	googleServiceConfig := google.ServiceConfig{
+		APIName:      apiName,
+		ClientID:     serviceConfig.ClientID,
+		ClientSecret: serviceConfig.ClientSecret,
+	}
+
+	googleService, e := google.NewService(&googleServiceConfig, bigQueryService)
+	if e != nil {
+		return nil, e
+	}
 
 	tokenSource := TokenSource{googleService}
 
@@ -68,7 +86,12 @@ func NewService(clientID string, clientSecret string, scope string, bigQueryServ
 	if err != nil {
 		return nil, errortools.ErrorMessage(err)
 	}
-	return &Service{googleService, analyticsService, reportingService}, nil
+	return &Service{
+		clientID:         serviceConfig.ClientID,
+		googleService:    googleService,
+		AnalyticsService: analyticsService,
+		ReportingService: reportingService,
+	}, nil
 }
 
 func NewServiceJSON(credentials *credentials.CredentialsJSON) (*Service, *errortools.Error) {
@@ -96,10 +119,22 @@ func NewServiceJSON(credentials *credentials.CredentialsJSON) (*Service, *errort
 	}, nil
 }
 
-func (service *Service) InitToken() *errortools.Error {
-	if service.googleService == nil {
-		return errortools.ErrorMessage("GoogleService not initialized.")
-	}
+func (service *Service) InitToken(scope string) *errortools.Error {
+	return service.googleService.InitToken(scope)
+}
 
-	return service.googleService.InitToken()
+func (service *Service) APIName() string {
+	return apiName
+}
+
+func (service *Service) APIKey() string {
+	return service.clientID
+}
+
+func (service *Service) APICallCount() int64 {
+	return service.googleService.APICallCount()
+}
+
+func (service *Service) APIReset() {
+	service.googleService.APIReset()
 }
