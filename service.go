@@ -132,9 +132,15 @@ func (service *Service) APIKey() string {
 }
 
 func (service *Service) APICallCount() int64 {
+	if service.googleService == nil {
+		return 0
+	}
 	return service.googleService.APICallCount()
 }
 
 func (service *Service) APIReset() {
+	if service.googleService == nil {
+		return
+	}
 	service.googleService.APIReset()
 }
