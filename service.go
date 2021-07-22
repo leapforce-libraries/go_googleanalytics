@@ -119,8 +119,8 @@ func NewServiceJSON(credentials *credentials.CredentialsJSON) (*Service, *errort
 	}, nil
 }
 
-func (service *Service) InitToken(scope string) *errortools.Error {
-	return service.googleService.InitToken(scope)
+func (service *Service) InitToken(scope string, accessType *string, prompt *string, state *string) *errortools.Error {
+	return service.googleService.InitToken(scope, accessType, prompt, state)
 }
 
 func (service *Service) APIName() string {
