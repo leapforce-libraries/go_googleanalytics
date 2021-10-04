@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	errortools "github.com/leapforce-libraries/go_errortools"
 	google "github.com/leapforce-libraries/go_google"
@@ -17,6 +18,7 @@ import (
 
 const (
 	apiName string = "GoogleAnalytics"
+	apiURL  string = "https://analyticsreporting.googleapis.com/v4"
 )
 
 // Service
@@ -92,6 +94,10 @@ func NewService(serviceConfig *ServiceConfig, bigQueryService *bigquery.Service)
 		AnalyticsService: analyticsService,
 		ReportingService: reportingService,
 	}, nil
+}
+
+func (service *Service) url(path string) string {
+	return fmt.Sprintf("%s/%s", apiURL, path)
 }
 
 func NewServiceJSON(credentials *credentials.CredentialsJSON) (*Service, *errortools.Error) {
