@@ -1,33 +1,26 @@
 package googleanalytics
 
 import (
-	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
 	errortools "github.com/leapforce-libraries/go_errortools"
 	google "github.com/leapforce-libraries/go_google"
 	bigquery "github.com/leapforce-libraries/go_google/bigquery"
-	credentials "github.com/leapforce-libraries/go_google/credentials"
 	"golang.org/x/oauth2"
-	"google.golang.org/api/analytics/v3"
-	"google.golang.org/api/analyticsreporting/v4"
-	"google.golang.org/api/option"
 )
 
 const (
-	apiName string = "GoogleAnalytics"
-	apiURL  string = "https://analyticsreporting.googleapis.com/v4"
+	apiName         string = "GoogleAnalytics"
+	apiURLReporting string = "https://analyticsreporting.googleapis.com/v4"
+	apiURLAnalytics string = "https://www.googleapis.com/analytics/v3"
 )
 
 // Service
 //
 type Service struct {
-	clientID         string
-	googleService    *google.Service
-	AnalyticsService *analytics.Service
-	ReportingService *analyticsreporting.Service
+	clientID      string
+	googleService *google.Service
 }
 
 type TokenSource struct {
@@ -77,52 +70,18 @@ func NewService(serviceConfig *ServiceConfig, bigQueryService *bigquery.Service)
 		return nil, e
 	}
 
-	tokenSource := TokenSource{googleService}
-
-	analyticsService, err := analytics.NewService(context.Background(), option.WithTokenSource(tokenSource))
-	if err != nil {
-		return nil, errortools.ErrorMessage(err)
-	}
-
-	reportingService, err := analyticsreporting.NewService(context.Background(), option.WithTokenSource(tokenSource))
-	if err != nil {
-		return nil, errortools.ErrorMessage(err)
-	}
 	return &Service{
-		clientID:         serviceConfig.ClientID,
-		googleService:    googleService,
-		AnalyticsService: analyticsService,
-		ReportingService: reportingService,
+		clientID:      serviceConfig.ClientID,
+		googleService: googleService,
 	}, nil
 }
 
-func (service *Service) url(path string) string {
-	return fmt.Sprintf("%s/%s", apiURL, path)
+func (service *Service) urlAnalytics(path string) string {
+	return fmt.Sprintf("%s/%s", apiURLAnalytics, path)
 }
 
-func NewServiceJSON(credentials *credentials.CredentialsJSON) (*Service, *errortools.Error) {
-	if credentials == nil {
-		return nil, errortools.ErrorMessage("Credentials can be not be a nil pointer.")
-	}
-
-	credentialsJSON, err := json.Marshal(&credentials)
-	if err != nil {
-		return nil, errortools.ErrorMessage(err)
-	}
-
-	analyticsService, err := analytics.NewService(context.Background(), option.WithCredentialsJSON(credentialsJSON))
-	if err != nil {
-		return nil, errortools.ErrorMessage(err)
-	}
-
-	reportingService, err := analyticsreporting.NewService(context.Background(), option.WithCredentialsJSON(credentialsJSON))
-	if err != nil {
-		return nil, errortools.ErrorMessage(err)
-	}
-	return &Service{
-		AnalyticsService: analyticsService,
-		ReportingService: reportingService,
-	}, nil
+func (service *Service) urlReporting(path string) string {
+	return fmt.Sprintf("%s/%s", apiURLReporting, path)
 }
 
 func (service *Service) InitToken(scope string, accessType *string, prompt *string, state *string) *errortools.Error {

@@ -104,7 +104,7 @@ func (service *Service) BatchGet(reportRequestBody *ReportRequestBody) (*ReportR
 	reportResponseBody := ReportResponseBody{}
 
 	requestConfig := go_http.RequestConfig{
-		URL:           service.url("reports:batchGet"),
+		URL:           service.urlReporting("reports:batchGet"),
 		BodyModel:     reportRequestBody,
 		ResponseModel: &reportResponseBody,
 	}
