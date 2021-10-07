@@ -1,13 +1,14 @@
 package googleanalytics
 
 import (
-	"errors"
 	"fmt"
+	"net/http"
 
 	errortools "github.com/leapforce-libraries/go_errortools"
-	google "github.com/leapforce-libraries/go_google"
+	go_google "github.com/leapforce-libraries/go_google"
 	bigquery "github.com/leapforce-libraries/go_google/bigquery"
-	"golang.org/x/oauth2"
+	go_http "github.com/leapforce-libraries/go_http"
+	oauth2 "github.com/leapforce-libraries/go_oauth2"
 )
 
 const (
@@ -19,34 +20,48 @@ const (
 // Service
 //
 type Service struct {
-	clientID      string
-	googleService *google.Service
+	authorizationMode go_google.AuthorizationMode
+	id                string
+	apiKey            *string
+	accessToken       *string
+	httpService       *go_http.Service
+	googleService     *go_google.Service
 }
 
-type TokenSource struct {
-	googleService *google.Service
+type ServiceConfigWithAPIKey struct {
+	APIKey string
 }
 
-func (tokenSource TokenSource) Token() (*oauth2.Token, error) {
-	t, e := tokenSource.googleService.ValidateToken()
-	if e != nil {
-		return nil, errors.New(e.Message())
+func NewServiceWithAPIKey(serviceConfig *ServiceConfigWithAPIKey) (*Service, *errortools.Error) {
+	if serviceConfig == nil {
+		return nil, errortools.ErrorMessage("ServiceConfig must not be a nil pointer")
 	}
 
-	return &oauth2.Token{
-		AccessToken:  *t.AccessToken,
-		TokenType:    *t.TokenType,
-		RefreshToken: *t.RefreshToken,
-		Expiry:       *t.Expiry,
+	if serviceConfig.APIKey == "" {
+		return nil, errortools.ErrorMessage("APIKey not provided")
+	}
+
+	httpService, e := go_http.NewService(&go_http.ServiceConfig{})
+	if e != nil {
+		return nil, e
+	}
+
+	return &Service{
+		authorizationMode: go_google.AuthorizationModeAPIKey,
+		id:                serviceConfig.APIKey,
+		apiKey:            &serviceConfig.APIKey,
+		httpService:       httpService,
 	}, nil
 }
 
-type ServiceConfig struct {
-	ClientID     string
-	ClientSecret string
+type ServiceWithOAuth2Config struct {
+	ClientID          string
+	ClientSecret      string
+	GetTokenFunction  *func() (*oauth2.Token, *errortools.Error)
+	SaveTokenFunction *func(token *oauth2.Token) *errortools.Error
 }
 
-func NewService(serviceConfig *ServiceConfig, bigQueryService *bigquery.Service) (*Service, *errortools.Error) {
+func NewServiceWithOAuth2(serviceConfig *ServiceWithOAuth2Config, bigQueryService *bigquery.Service) (*Service, *errortools.Error) {
 	if serviceConfig == nil {
 		return nil, errortools.ErrorMessage("ServiceConfig must not be a nil pointer")
 	}
@@ -59,21 +74,90 @@ func NewService(serviceConfig *ServiceConfig, bigQueryService *bigquery.Service)
 		return nil, errortools.ErrorMessage("ClientSecret not provided")
 	}
 
-	googleServiceConfig := google.ServiceConfig{
-		APIName:      apiName,
-		ClientID:     serviceConfig.ClientID,
-		ClientSecret: serviceConfig.ClientSecret,
+	googleServiceConfig := go_google.ServiceConfig{
+		APIName:           apiName,
+		ClientID:          serviceConfig.ClientID,
+		ClientSecret:      serviceConfig.ClientSecret,
+		GetTokenFunction:  serviceConfig.GetTokenFunction,
+		SaveTokenFunction: serviceConfig.SaveTokenFunction,
 	}
 
-	googleService, e := google.NewService(&googleServiceConfig, bigQueryService)
+	googleService, e := go_google.NewService(&googleServiceConfig, bigQueryService)
 	if e != nil {
 		return nil, e
 	}
 
 	return &Service{
-		clientID:      serviceConfig.ClientID,
-		googleService: googleService,
+		authorizationMode: go_google.AuthorizationModeOAuth2,
+		id:                go_google.ClientIDShort(serviceConfig.ClientID),
+		googleService:     googleService,
 	}, nil
+}
+
+type ServiceWithAccessTokenConfig struct {
+	ClientID    string
+	AccessToken string
+}
+
+func NewServiceWithAccessToken(serviceConfig *ServiceWithAccessTokenConfig) (*Service, *errortools.Error) {
+	if serviceConfig == nil {
+		return nil, errortools.ErrorMessage("ServiceConfig must not be a nil pointer")
+	}
+
+	if serviceConfig.AccessToken == "" {
+		return nil, errortools.ErrorMessage("AccessToken not provided")
+	}
+
+	httpService, e := go_http.NewService(&go_http.ServiceConfig{})
+	if e != nil {
+		return nil, e
+	}
+
+	return &Service{
+		authorizationMode: go_google.AuthorizationModeAccessToken,
+		accessToken:       &serviceConfig.AccessToken,
+		id:                go_google.ClientIDShort(serviceConfig.ClientID),
+		httpService:       httpService,
+	}, nil
+}
+
+func (service *Service) httpRequest(requestConfig *go_http.RequestConfig) (*http.Request, *http.Response, *errortools.Error) {
+	var request *http.Request
+	var response *http.Response
+	var e *errortools.Error
+
+	if service.authorizationMode == go_google.AuthorizationModeOAuth2 {
+		request, response, e = service.googleService.HTTPRequest(requestConfig)
+	} else {
+		// add error model
+		errorResponse := go_google.ErrorResponse{}
+		requestConfig.ErrorModel = &errorResponse
+
+		if service.authorizationMode == go_google.AuthorizationModeAPIKey {
+			// add api key
+			requestConfig.SetParameter("key", *service.apiKey)
+		}
+		if service.accessToken != nil {
+			// add accesstoken to header
+			header := http.Header{}
+			header.Set("Authorization", fmt.Sprintf("Bearer %s", *service.accessToken))
+			requestConfig.NonDefaultHeaders = &header
+		}
+
+		request, response, e = service.httpService.HTTPRequest(requestConfig)
+
+		if e != nil {
+			if errorResponse.Error.Message != "" {
+				e.SetMessage(errorResponse.Error.Message)
+			}
+		}
+	}
+
+	if e != nil {
+		return request, response, e
+	}
+
+	return request, response, nil
 }
 
 func (service *Service) urlAnalytics(path string) string {
@@ -93,7 +177,7 @@ func (service *Service) APIName() string {
 }
 
 func (service *Service) APIKey() string {
-	return service.clientID
+	return service.id
 }
 
 func (service *Service) APICallCount() int64 {

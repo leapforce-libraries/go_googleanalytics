@@ -1,6 +1,8 @@
 package googleanalytics
 
 import (
+	"net/http"
+
 	"cloud.google.com/go/civil"
 	errortools "github.com/leapforce-libraries/go_errortools"
 	go_http "github.com/leapforce-libraries/go_http"
@@ -104,12 +106,13 @@ func (service *Service) BatchGet(reportRequestBody *ReportRequestBody) (*ReportR
 	reportResponseBody := ReportResponseBody{}
 
 	requestConfig := go_http.RequestConfig{
+		Method:        http.MethodPost,
 		URL:           service.urlReporting("reports:batchGet"),
 		BodyModel:     reportRequestBody,
 		ResponseModel: &reportResponseBody,
 	}
 
-	_, _, e := service.googleService.Post(&requestConfig)
+	_, _, e := service.httpRequest(&requestConfig)
 	return &reportResponseBody, e
 }
 

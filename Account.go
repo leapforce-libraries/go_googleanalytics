@@ -2,6 +2,7 @@ package googleanalytics
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 
 	errortools "github.com/leapforce-libraries/go_errortools"
@@ -62,11 +63,12 @@ func (service *Service) ListAccounts(config *ListAccountsConfig) (*[]Account, *e
 		response := AccountResponse{}
 
 		requestConfig := go_http.RequestConfig{
+			Method:        http.MethodGet,
 			URL:           url,
 			ResponseModel: &response,
 		}
 
-		_, _, e := service.googleService.Get(&requestConfig)
+		_, _, e := service.httpRequest(&requestConfig)
 		if e != nil {
 			return nil, e
 		}
@@ -77,8 +79,10 @@ func (service *Service) ListAccounts(config *ListAccountsConfig) (*[]Account, *e
 
 		accounts = append(accounts, response.Items...)
 
-		if config.StartIndex != nil {
-			break
+		if config != nil {
+			if config.StartIndex != nil {
+				break
+			}
 		}
 
 		if response.NextLink == "" {

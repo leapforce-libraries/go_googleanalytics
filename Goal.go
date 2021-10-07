@@ -2,6 +2,7 @@ package googleanalytics
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 
 	errortools "github.com/leapforce-libraries/go_errortools"
@@ -71,11 +72,12 @@ func (service *Service) ListGoals(config *ListGoalsConfig) (*[]Goal, *errortools
 		response := GoalResponse{}
 
 		requestConfig := go_http.RequestConfig{
+			Method:        http.MethodGet,
 			URL:           url,
 			ResponseModel: &response,
 		}
 
-		_, _, e := service.googleService.Get(&requestConfig)
+		_, _, e := service.httpRequest(&requestConfig)
 		if e != nil {
 			return nil, e
 		}
