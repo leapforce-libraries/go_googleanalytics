@@ -8,7 +8,7 @@ import (
 	go_google "github.com/leapforce-libraries/go_google"
 	bigquery "github.com/leapforce-libraries/go_google/bigquery"
 	go_http "github.com/leapforce-libraries/go_http"
-	oauth2 "github.com/leapforce-libraries/go_oauth2"
+	"github.com/leapforce-libraries/go_oauth2/tokensource"
 )
 
 const (
@@ -55,10 +55,9 @@ func NewServiceWithAPIKey(serviceConfig *ServiceConfigWithAPIKey) (*Service, *er
 }
 
 type ServiceWithOAuth2Config struct {
-	ClientID          string
-	ClientSecret      string
-	GetTokenFunction  *func() (*oauth2.Token, *errortools.Error)
-	SaveTokenFunction *func(token *oauth2.Token) *errortools.Error
+	ClientID     string
+	ClientSecret string
+	TokenSource  tokensource.TokenSource
 }
 
 func NewServiceWithOAuth2(serviceConfig *ServiceWithOAuth2Config, bigQueryService *bigquery.Service) (*Service, *errortools.Error) {
@@ -75,11 +74,10 @@ func NewServiceWithOAuth2(serviceConfig *ServiceWithOAuth2Config, bigQueryServic
 	}
 
 	googleServiceConfig := go_google.ServiceConfig{
-		APIName:           apiName,
-		ClientID:          serviceConfig.ClientID,
-		ClientSecret:      serviceConfig.ClientSecret,
-		GetTokenFunction:  serviceConfig.GetTokenFunction,
-		SaveTokenFunction: serviceConfig.SaveTokenFunction,
+		APIName:      apiName,
+		ClientID:     serviceConfig.ClientID,
+		ClientSecret: serviceConfig.ClientSecret,
+		TokenSource:  serviceConfig.TokenSource,
 	}
 
 	googleService, e := go_google.NewService(&googleServiceConfig, bigQueryService)
