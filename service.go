@@ -6,7 +6,6 @@ import (
 
 	errortools "github.com/leapforce-libraries/go_errortools"
 	go_google "github.com/leapforce-libraries/go_google"
-	bigquery "github.com/leapforce-libraries/go_google/bigquery"
 	go_http "github.com/leapforce-libraries/go_http"
 	"github.com/leapforce-libraries/go_oauth2/tokensource"
 )
@@ -60,7 +59,7 @@ type ServiceWithOAuth2Config struct {
 	TokenSource  tokensource.TokenSource
 }
 
-func NewServiceWithOAuth2(serviceConfig *ServiceWithOAuth2Config, bigQueryService *bigquery.Service) (*Service, *errortools.Error) {
+func NewServiceWithOAuth2(serviceConfig *ServiceWithOAuth2Config) (*Service, *errortools.Error) {
 	if serviceConfig == nil {
 		return nil, errortools.ErrorMessage("ServiceConfig must not be a nil pointer")
 	}
@@ -80,7 +79,7 @@ func NewServiceWithOAuth2(serviceConfig *ServiceWithOAuth2Config, bigQueryServic
 		TokenSource:  serviceConfig.TokenSource,
 	}
 
-	googleService, e := go_google.NewService(&googleServiceConfig, bigQueryService)
+	googleService, e := go_google.NewService(&googleServiceConfig)
 	if e != nil {
 		return nil, e
 	}
