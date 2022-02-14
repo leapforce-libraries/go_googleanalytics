@@ -68,10 +68,6 @@ func NewServiceWithOAuth2(serviceConfig *ServiceWithOAuth2Config) (*Service, *er
 		return nil, errortools.ErrorMessage("ClientID not provided")
 	}
 
-	if serviceConfig.ClientSecret == "" {
-		return nil, errortools.ErrorMessage("ClientSecret not provided")
-	}
-
 	googleServiceConfig := go_google.ServiceConfig{
 		APIName:      apiName,
 		ClientID:     serviceConfig.ClientID,
