@@ -64,11 +64,11 @@ func (service *Service) ListAccounts(config *ListAccountsConfig) (*[]Account, *e
 
 		requestConfig := go_http.RequestConfig{
 			Method:        http.MethodGet,
-			URL:           url,
+			Url:           url,
 			ResponseModel: &response,
 		}
 
-		_, _, e := service.httpRequest(&requestConfig)
+		_, _, e := service.googleService().HttpRequest(&requestConfig)
 		if e != nil {
 			return nil, e
 		}

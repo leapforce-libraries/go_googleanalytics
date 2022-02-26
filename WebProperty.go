@@ -28,7 +28,7 @@ type WebProperty struct {
 	AccountID                       string `json:"accountId"`
 	InternalWebPropertyID           string `json:"internalWebPropertyId"`
 	Name                            string `json:"name"`
-	WebsiteURL                      string `json:"websiteUrl"`
+	WebsiteUrl                      string `json:"websiteUrl"`
 	Level                           string `json:"level"`
 	ProfileCount                    int64  `json:"profileCount"`
 	IndustryVertical                string `json:"industryVertical"`
@@ -81,11 +81,11 @@ func (service *Service) ListWebProperties(config *ListWebPropertiesConfig) (*[]W
 
 		requestConfig := go_http.RequestConfig{
 			Method:        http.MethodGet,
-			URL:           url,
+			Url:           url,
 			ResponseModel: &response,
 		}
 
-		_, _, e := service.httpRequest(&requestConfig)
+		_, _, e := service.googleService().HttpRequest(&requestConfig)
 		if e != nil {
 			return nil, e
 		}

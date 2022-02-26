@@ -107,12 +107,12 @@ func (service *Service) BatchGet(reportRequestBody *ReportRequestBody) (*ReportR
 
 	requestConfig := go_http.RequestConfig{
 		Method:        http.MethodPost,
-		URL:           service.urlReporting("reports:batchGet"),
+		Url:           service.urlReporting("reports:batchGet"),
 		BodyModel:     reportRequestBody,
 		ResponseModel: &reportResponseBody,
 	}
 
-	_, _, e := service.httpRequest(&requestConfig)
+	_, _, e := service.googleService().HttpRequest(&requestConfig)
 	return &reportResponseBody, e
 }
 

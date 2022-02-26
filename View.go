@@ -31,7 +31,7 @@ type View struct {
 	Name                              string `json:"name"`
 	Currency                          string `json:"currency"`
 	Timezone                          string `json:"timezone"`
-	WebsiteURL                        string `json:"websiteUrl"`
+	WebsiteUrl                        string `json:"websiteUrl"`
 	DefaultPage                       string `json:"defaultPage"`
 	ExcludeQueryParameters            string `json:"excludeQueryParameters"`
 	SiteSearchQueryParameters         string `json:"siteSearchQueryParameters"`
@@ -89,11 +89,11 @@ func (service *Service) ListViews(config *ListViewsConfig) (*[]View, *errortools
 
 		requestConfig := go_http.RequestConfig{
 			Method:        http.MethodGet,
-			URL:           url,
+			Url:           url,
 			ResponseModel: &response,
 		}
 
-		_, _, e := service.httpRequest(&requestConfig)
+		_, _, e := service.googleService().HttpRequest(&requestConfig)
 		if e != nil {
 			return nil, e
 		}

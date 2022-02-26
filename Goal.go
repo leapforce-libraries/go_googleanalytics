@@ -73,11 +73,11 @@ func (service *Service) ListGoals(config *ListGoalsConfig) (*[]Goal, *errortools
 
 		requestConfig := go_http.RequestConfig{
 			Method:        http.MethodGet,
-			URL:           url,
+			Url:           url,
 			ResponseModel: &response,
 		}
 
-		_, _, e := service.httpRequest(&requestConfig)
+		_, _, e := service.googleService().HttpRequest(&requestConfig)
 		if e != nil {
 			return nil, e
 		}
