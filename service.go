@@ -11,6 +11,8 @@ const (
 	apiName         string = "GoogleAnalytics"
 	apiURLReporting string = "https://analyticsreporting.googleapis.com/v4"
 	apiURLAnalytics string = "https://www.googleapis.com/analytics/v3"
+	apiURLData      string = "https://analyticsdata.googleapis.com/v1beta"
+	apiURLAdmin     string = "https://analyticsadmin.googleapis.com/v1alpha"
 )
 
 type Service go_google.Service
@@ -48,6 +50,14 @@ func (service *Service) urlAnalytics(path string) string {
 
 func (service *Service) urlReporting(path string) string {
 	return fmt.Sprintf("%s/%s", apiURLReporting, path)
+}
+
+func (service *Service) urlData(path string) string {
+	return fmt.Sprintf("%s/%s", apiURLData, path)
+}
+
+func (service *Service) urlAdmin(path string) string {
+	return fmt.Sprintf("%s/%s", apiURLAdmin, path)
 }
 
 func (service *Service) ApiName() string {
